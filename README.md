@@ -11,6 +11,7 @@ An animated Lovelace card for the **Anova Precision Cooker** (sous vide stick) i
 - Progress bar: preheat progress (start temp → target) and cook progress (elapsed / cook time)
 - Animated illustration: the stick's display shows the water temperature, the water glows while preheating, bubbles and steam while cooking
 - Optional power button for a smart plug, with a two-tap confirmation before switching off
+- Visual editor: configure the card from the dashboard UI (v1.1.0)
 - Dutch and English labels
 
 ## Requirements
@@ -33,6 +34,8 @@ An animated Lovelace card for the **Anova Precision Cooker** (sous vide stick) i
 <!-- ha-marketplace:exclude-end -->
 
 ## Configuration
+
+Add the card from the card picker and use the visual editor, or in YAML:
 
 ```yaml
 type: custom:anova-sous-vide-card

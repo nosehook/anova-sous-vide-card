@@ -1,5 +1,5 @@
 /*
- * anova-sous-vide-card  v1.0.0
+ * anova-sous-vide-card  v1.1.0
  * Lovelace card for an Anova Precision Cooker (sous vide stick), styled after
  * custom:appliance-washer-card from skyrotter/ha-appliance-electromenager-cards.
  *
@@ -20,7 +20,7 @@
  *   start_temp: 20                                          # tap-water temp, for the preheat bar
  */
 (() => {
-  const VERSION = "1.0.0";
+  const VERSION = "1.1.0";
 
   const STATE_LABELS = {
     nl: {
@@ -250,7 +250,50 @@
   </svg>`;
 
   class AnovaSousVideCard extends HTMLElement {
-    static getStubConfig() { return { ...DEFAULTS, switch: "", power: "", energy: "" }; }
+    static getStubConfig() { return { name: "Sous vide" }; }
+
+    static getConfigForm() {
+      const ent = (domain, integration) => ({ entity: { domain, ...(integration ? { integration } : {}) } });
+      return {
+        schema: [
+          { name: "name", selector: { text: {} } },
+          { type: "expandable", name: "", title: "Anova-sensoren", icon: "mdi:pot-steam", flatten: true, schema: [
+            { name: "state", selector: ent("sensor", "anova") },
+            { name: "mode", selector: ent("sensor", "anova") },
+            { type: "grid", name: "", flatten: true, schema: [
+              { name: "water_temp", selector: ent("sensor", "anova") },
+              { name: "target_temp", selector: ent("sensor", "anova") },
+              { name: "remaining", selector: ent("sensor", "anova") },
+              { name: "cook_time", selector: ent("sensor", "anova") },
+            ] },
+          ] },
+          { type: "expandable", name: "", title: "Slimme stekker (optioneel)", icon: "mdi:power-plug", flatten: true, schema: [
+            { name: "switch", selector: { entity: { domain: ["switch", "light", "input_boolean"] } } },
+            { type: "grid", name: "", flatten: true, schema: [
+              { name: "power", selector: { entity: { domain: "sensor", device_class: "power" } } },
+              { name: "energy", selector: { entity: { domain: "sensor", device_class: "energy" } } },
+            ] },
+            { name: "confirm_off", selector: { boolean: {} } },
+          ] },
+          { type: "expandable", name: "", title: "Weergave", icon: "mdi:palette", flatten: true, schema: [
+            { type: "grid", name: "", flatten: true, schema: [
+              { name: "start_temp", selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "°C" } } },
+              { name: "language", selector: { select: { mode: "dropdown", options: [{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }] } } },
+            ] },
+          ] },
+        ],
+        computeLabel: (s) => ({
+          name: "Naam", state: "Status (staat)", mode: "Modus", water_temp: "Watertemperatuur", target_temp: "Doeltemperatuur",
+          remaining: "Resterende kooktijd", cook_time: "Totale kooktijd", switch: "Aan/uit-knop (stekker)", power: "Vermogen",
+          energy: "Energie", confirm_off: "Bevestigen voor uitzetten", start_temp: "Starttemperatuur voorverwarmen", language: "Taal",
+        }[s.name] ?? s.name),
+        computeHelper: (s) => ({
+          state: "Leeg = standaard Anova-sensor (Nederlandse entiteit-ID's).",
+          start_temp: "Begin van de voorverwarmbalk (temperatuur van kraanwater).",
+          energy: "Wordt getoond als er geen vermogenssensor is gekozen.",
+        }[s.name]),
+      };
+    }
 
     setConfig(config) {
       if (!config) throw new Error("Invalid configuration");

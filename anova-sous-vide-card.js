@@ -1,5 +1,5 @@
 /*
- * anova-sous-vide-card  v1.1.0
+ * anova-sous-vide-card  v1.1.1
  * Lovelace card for an Anova Precision Cooker (sous vide stick), styled after
  * custom:appliance-washer-card from skyrotter/ha-appliance-electromenager-cards.
  *
@@ -20,7 +20,7 @@
  *   start_temp: 20                                          # tap-water temp, for the preheat bar
  */
 (() => {
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
 
   const STATE_LABELS = {
     nl: {
@@ -443,9 +443,29 @@
         const en = num(this.st(c.energy));
         tiles.push({ e: c.energy, v: en == null ? "—" : `${en.toFixed(2)} kWh`, l: this.t("energy"), i: "mdi:lightning-bolt-circle" });
       }
-      const html = tiles.map((t) => `<div class="tile${t.hot ? " hot" : ""}" data-entity="${t.e || ""}">
-          <span class="val">${t.v}</span><span class="lbl"><ha-icon icon="${t.i}"></ha-icon>${t.l}</span></div>`).join("");
-      if (html !== this._lastTiles) { this.$("stats").innerHTML = html; this._lastTiles = html; }
+      // Built with DOM APIs (no innerHTML): units, entity ids and labels come from
+      // entity attributes / card config and must never be parsed as markup.
+      const sig = JSON.stringify(tiles.map((t) => [t.e || "", t.v, t.l, t.i, !!t.hot]));
+      if (sig !== this._lastTiles) {
+        const frag = document.createDocumentFragment();
+        for (const t of tiles) {
+          const tile = document.createElement("div");
+          tile.className = t.hot ? "tile hot" : "tile";
+          tile.setAttribute("data-entity", String(t.e || ""));
+          const val = document.createElement("span");
+          val.className = "val";
+          val.textContent = String(t.v);
+          const lbl = document.createElement("span");
+          lbl.className = "lbl";
+          const icon = document.createElement("ha-icon");
+          icon.setAttribute("icon", String(t.i));
+          lbl.append(icon, document.createTextNode(String(t.l)));
+          tile.append(val, lbl);
+          frag.append(tile);
+        }
+        this.$("stats").replaceChildren(frag);
+        this._lastTiles = sig;
+      }
 
       // progress bar: preheat = water/target, cooking = elapsed/cook time
       let pct = null, l = "", r = "";
